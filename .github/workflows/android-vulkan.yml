@@ -37,20 +37,18 @@ jobs:
         wget -q https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin -O examples/whisper.android/app/src/main/assets/models/ggml-base.bin
         ls -lh examples/whisper.android/app/src/main/assets/models/
 
-    - name: Download Vulkan-Hpp
+    - name: Download Vulkan Headers
       run: |
+        # Vulkan C headers + C++ headers の両方が必要
+        git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git /tmp/Vulkan-Headers
+        git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Hpp.git /tmp/Vulkan-Hpp
         mkdir -p external/vulkan
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan.hpp -O external/vulkan/vulkan.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_enums.hpp -O external/vulkan/vulkan_enums.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_funcs.hpp -O external/vulkan/vulkan_funcs.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_handles.hpp -O external/vulkan/vulkan_handles.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_structs.hpp -O external/vulkan/vulkan_structs.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_to_string.hpp -O external/vulkan/vulkan_to_string.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_hash.hpp -O external/vulkan/vulkan_hash.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_raii.hpp -O external/vulkan/vulkan_raii.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_static_assertions.hpp -O external/vulkan/vulkan_static_assertions.hpp
-        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_format_traits.hpp -O external/vulkan/vulkan_format_traits.hpp
-        ls -la external/vulkan/
+        # C headers (vulkan.h etc)
+        cp -r /tmp/Vulkan-Headers/include/vulkan/* external/vulkan/
+        # C++ headers (vulkan.hpp etc) - 上書き
+        cp -r /tmp/Vulkan-Hpp/vulkan/* external/vulkan/
+        ls -la external/vulkan/ | head -20
+        echo "Total files: $(ls external/vulkan/ | wc -l)"
 
     - name: Enable Vulkan in CMakeLists
       run: |
