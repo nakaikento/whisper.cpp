@@ -42,6 +42,7 @@ jobs:
         # Vulkan C headers + C++ headers の両方が必要
         git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git /tmp/Vulkan-Headers
         git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Hpp.git /tmp/Vulkan-Hpp
+        mkdir -p external
         # include/ 以下をそのままコピー（vulkan/ と vk_video/ 両方）
         cp -r /tmp/Vulkan-Headers/include/* external/
         # C++ headers (vulkan.hpp etc) - vulkan/ に追加
