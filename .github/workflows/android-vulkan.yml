@@ -1,11 +1,7 @@
 name: Android Vulkan Build
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  workflow_dispatch:
+  workflow_dispatch:  # 手動トリガーのみ
 
 jobs:
   android-vulkan:
