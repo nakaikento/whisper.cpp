@@ -58,7 +58,8 @@ jobs:
         # FetchContentの前にGGML_VULKANを設定
         sed -i 's/include(FetchContent)/set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan" FORCE)\ninclude(FetchContent)/' CMakeLists.txt
         # Vulkan-Hppのインクルードパスを追加
-        sed -i 's|FetchContent_MakeAvailable(ggml)|include_directories(${CMAKE_SOURCE_DIR}/../../../../../../../../../../../external/vulkan)\nFetchContent_MakeAvailable(ggml)|' CMakeLists.txt
+        # external/ をインクルードパスに追加（<vulkan/vulkan.hpp> → external/vulkan/vulkan.hpp）
+        sed -i 's|FetchContent_MakeAvailable(ggml)|include_directories(${CMAKE_SOURCE_DIR}/../../../../../../../../../../../external)\nFetchContent_MakeAvailable(ggml)|' CMakeLists.txt
         echo "=== Modified CMakeLists.txt ==="
         cat CMakeLists.txt
 
