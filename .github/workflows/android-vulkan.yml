@@ -1,7 +1,10 @@
 name: Android Vulkan Build
 
 on:
-  workflow_dispatch:  # 手動トリガーのみ
+  push:
+    paths:
+      - '.github/workflows/android-vulkan.yml'
+  workflow_dispatch:
 
 jobs:
   android-vulkan:
