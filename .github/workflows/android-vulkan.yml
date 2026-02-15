@@ -26,17 +26,13 @@ jobs:
       uses: android-actions/setup-android@v3
 
     - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ninja-build
+      run: sudo apt-get update && sudo apt-get install -y ninja-build
 
     - name: Install NDK
-      run: |
-        sdkmanager --install "ndk;25.2.9519653"
+      run: sdkmanager --install "ndk;25.2.9519653"
 
     - name: Download Vulkan-Hpp
       run: |
-        # Download Vulkan C++ wrapper header
         mkdir -p external/vulkan
         wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan.hpp -O external/vulkan/vulkan.hpp
         wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_enums.hpp -O external/vulkan/vulkan_enums.hpp
@@ -53,14 +49,9 @@ jobs:
     - name: Enable Vulkan in CMakeLists
       run: |
         cd examples/whisper.android/lib/src/main/jni/whisper
-        # Add Vulkan include path and enable GGML_VULKAN
-        cat >> CMakeLists.txt << 'EOF'
-
-# Vulkan support
-set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan" FORCE)
-include_directories(${CMAKE_SOURCE_DIR}/../../../../../../../../../../../external/vulkan)
-EOF
-        echo "=== CMakeLists.txt tail ==="
+        echo "" >> CMakeLists.txt
+        echo "set(GGML_VULKAN ON CACHE BOOL \"Enable Vulkan\" FORCE)" >> CMakeLists.txt
+        echo "include_directories(\${CMAKE_SOURCE_DIR}/../../../../../../../../../../../external/vulkan)" >> CMakeLists.txt
         tail -5 CMakeLists.txt
 
     - name: Build Android APK
