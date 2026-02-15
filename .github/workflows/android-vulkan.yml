@@ -42,13 +42,13 @@ jobs:
         # Vulkan C headers + C++ headers の両方が必要
         git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git /tmp/Vulkan-Headers
         git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Hpp.git /tmp/Vulkan-Hpp
-        mkdir -p external/vulkan
-        # C headers (vulkan.h etc)
-        cp -r /tmp/Vulkan-Headers/include/vulkan/* external/vulkan/
-        # C++ headers (vulkan.hpp etc) - 上書き
+        # include/ 以下をそのままコピー（vulkan/ と vk_video/ 両方）
+        cp -r /tmp/Vulkan-Headers/include/* external/
+        # C++ headers (vulkan.hpp etc) - vulkan/ に追加
         cp -r /tmp/Vulkan-Hpp/vulkan/* external/vulkan/
-        ls -la external/vulkan/ | head -20
-        echo "Total files: $(ls external/vulkan/ | wc -l)"
+        ls -la external/
+        ls -la external/vulkan/ | head -10
+        echo "Total vulkan files: $(ls external/vulkan/ | wc -l)"
 
     - name: Enable Vulkan in CMakeLists
       run: |
