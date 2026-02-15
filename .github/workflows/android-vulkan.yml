@@ -37,16 +37,19 @@ jobs:
       run: |
         sdkmanager --install "ndk;25.2.9519653"
 
-    - name: Build Android APK with Vulkan
+    - name: Enable Vulkan in CMakeLists
+      run: |
+        # Add GGML_VULKAN option to CMakeLists.txt
+        cd examples/whisper.android/lib/src/main/jni/whisper
+        sed -i '/project(whisper.cpp)/a set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan" FORCE)' CMakeLists.txt
+        head -20 CMakeLists.txt
+
+    - name: Build Android APK
       run: |
         cd examples/whisper.android
-        
-        # Enable Vulkan in build.gradle
-        sed -i 's/externalNativeBuild {/externalNativeBuild {\n            cmake {\n                arguments "-DGGML_VULKAN=ON"\n            }/' lib/build.gradle
-        
         ./gradlew assembleRelease
       env:
-        ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
+        ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
