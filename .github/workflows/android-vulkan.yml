@@ -79,6 +79,13 @@ jobs:
         echo "=== Modified CMakeLists.txt ==="
         cat CMakeLists.txt
 
+    - name: Update minSdk for Vulkan 1.1 support
+      run: |
+        # Vulkan 1.1 (vkGetPhysicalDeviceFeatures2等) はAPI 29以上が必要
+        sed -i 's/minSdk 26/minSdk 29/g' examples/whisper.android/app/build.gradle
+        sed -i 's/minSdk 26/minSdk 29/g' examples/whisper.android/lib/build.gradle
+        echo "Updated minSdk to 29 for Vulkan 1.1 support"
+
     - name: Build Android APK
       run: |
         cd examples/whisper.android
