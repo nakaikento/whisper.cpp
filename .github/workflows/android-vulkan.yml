@@ -79,12 +79,17 @@ jobs:
         echo "=== Modified CMakeLists.txt ==="
         cat CMakeLists.txt
 
-    - name: Update minSdk for Vulkan 1.1 support
+    - name: Update minSdk and ABI for Vulkan 1.1 support
       run: |
         # Vulkan 1.1 (vkGetPhysicalDeviceFeatures2等) はAPI 29以上が必要
         sed -i 's/minSdk 26/minSdk 29/g' examples/whisper.android/app/build.gradle
         sed -i 's/minSdk 26/minSdk 29/g' examples/whisper.android/lib/build.gradle
-        echo "Updated minSdk to 29 for Vulkan 1.1 support"
+        
+        # arm64-v8aのみに限定（32bitはVulkan-Hppのostreamサポート問題あり）
+        sed -i "s/abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'/abiFilters 'arm64-v8a'/g" examples/whisper.android/app/build.gradle
+        sed -i "s/abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'/abiFilters 'arm64-v8a'/g" examples/whisper.android/lib/build.gradle
+        
+        echo "Updated minSdk to 29 and ABI to arm64-v8a only"
 
     - name: Build Android APK
       run: |
