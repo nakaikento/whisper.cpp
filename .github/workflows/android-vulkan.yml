@@ -22,23 +22,43 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Install Vulkan SDK
+    - name: Install dependencies
       run: |
-        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
         sudo apt-get update
-        sudo apt-get install -y vulkan-sdk ninja-build
+        sudo apt-get install -y ninja-build
 
     - name: Install NDK
       run: |
         sdkmanager --install "ndk;25.2.9519653"
 
+    - name: Download Vulkan-Hpp
+      run: |
+        # Download Vulkan C++ wrapper header
+        mkdir -p external/vulkan
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan.hpp -O external/vulkan/vulkan.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_enums.hpp -O external/vulkan/vulkan_enums.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_funcs.hpp -O external/vulkan/vulkan_funcs.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_handles.hpp -O external/vulkan/vulkan_handles.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_structs.hpp -O external/vulkan/vulkan_structs.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_to_string.hpp -O external/vulkan/vulkan_to_string.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_hash.hpp -O external/vulkan/vulkan_hash.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_raii.hpp -O external/vulkan/vulkan_raii.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_static_assertions.hpp -O external/vulkan/vulkan_static_assertions.hpp
+        wget -q https://raw.githubusercontent.com/KhronosGroup/Vulkan-Hpp/main/vulkan/vulkan_format_traits.hpp -O external/vulkan/vulkan_format_traits.hpp
+        ls -la external/vulkan/
+
     - name: Enable Vulkan in CMakeLists
       run: |
-        # Add GGML_VULKAN option to CMakeLists.txt
         cd examples/whisper.android/lib/src/main/jni/whisper
-        sed -i '/project(whisper.cpp)/a set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan" FORCE)' CMakeLists.txt
-        head -20 CMakeLists.txt
+        # Add Vulkan include path and enable GGML_VULKAN
+        cat >> CMakeLists.txt << 'EOF'
+
+# Vulkan support
+set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan" FORCE)
+include_directories(${CMAKE_SOURCE_DIR}/../../../../../../../../../../../external/vulkan)
+EOF
+        echo "=== CMakeLists.txt tail ==="
+        tail -5 CMakeLists.txt
 
     - name: Build Android APK
       run: |
