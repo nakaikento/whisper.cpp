@@ -1,0 +1,55 @@
+name: Android Vulkan Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  android-vulkan:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install Vulkan SDK
+      run: |
+        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
+        sudo apt-get update
+        sudo apt-get install -y vulkan-sdk ninja-build
+
+    - name: Install NDK
+      run: |
+        sdkmanager --install "ndk;25.2.9519653"
+
+    - name: Build Android APK with Vulkan
+      run: |
+        cd examples/whisper.android
+        
+        # Enable Vulkan in build.gradle
+        sed -i 's/externalNativeBuild {/externalNativeBuild {\n            cmake {\n                arguments "-DGGML_VULKAN=ON"\n            }/' lib/build.gradle
+        
+        ./gradlew assembleRelease
+      env:
+        ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisper-android-vulkan
+        path: examples/whisper.android/app/build/outputs/apk/release/*.apk
