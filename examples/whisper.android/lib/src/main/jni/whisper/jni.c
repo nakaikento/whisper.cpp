@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <sys/sysinfo.h>
 #include <string.h>
+#include <time.h>
 #include "whisper.h"
 #include "ggml.h"
+#include "ggml-backend.h"
 
 #define UNUSED(x) (void)(x)
 #define TAG "JNI"
@@ -127,7 +129,31 @@ static struct whisper_context *whisper_init_from_asset(
             .close = &asset_close
     };
 
-    return whisper_init_with_params(&loader, whisper_context_default_params());
+    // Log available backends
+    size_t n_backends = ggml_backend_reg_count();
+    LOGI("Available GGML backends: %zu\n", n_backends);
+    for (size_t i = 0; i < n_backends; i++) {
+        ggml_backend_reg_t reg = ggml_backend_reg_get(i);
+        LOGI("  Backend %zu: %s\n", i, ggml_backend_reg_name(reg));
+    }
+    
+    // Log available devices
+    size_t n_devices = ggml_backend_dev_count();
+    LOGI("Available GGML devices: %zu\n", n_devices);
+    for (size_t i = 0; i < n_devices; i++) {
+        ggml_backend_dev_t dev = ggml_backend_dev_get(i);
+        LOGI("  Device %zu: %s (type: %d)\n", i, ggml_backend_dev_name(dev), ggml_backend_dev_type(dev));
+    }
+
+    struct whisper_context_params ctx_params = whisper_context_default_params();
+    ctx_params.use_gpu = true;
+    LOGI("Initializing whisper context with GPU enabled: %d\n", ctx_params.use_gpu);
+    
+    struct whisper_context *ctx = whisper_init_with_params(&loader, ctx_params);
+    if (ctx) {
+        LOGI("Whisper context created successfully. System info: %s\n", whisper_print_system_info());
+    }
+    return ctx;
 }
 
 JNIEXPORT jlong JNICALL
@@ -176,7 +202,7 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
     params.print_timestamps = true;
     params.print_special = false;
     params.translate = false;
-    params.language = "en";
+    params.language = "auto";
     params.n_threads = num_threads;
     params.offset_ms = 0;
     params.no_context = true;
@@ -184,10 +210,19 @@ Java_com_whispercpp_whisper_WhisperLib_00024Companion_fullTranscribe(
 
     whisper_reset_timings(context);
 
-    LOGI("About to run whisper_full");
+    float audio_duration_ms = (float)audio_data_length / 16.0f;  // 16kHz
+    LOGI("Starting transcription: %.1f ms audio, %d threads", audio_duration_ms, num_threads);
+    
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    
     if (whisper_full(context, params, audio_data_arr, audio_data_length) != 0) {
         LOGI("Failed to run the model");
     } else {
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        double elapsed_ms = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_nsec - start.tv_nsec) / 1000000.0;
+        double rtf = elapsed_ms / audio_duration_ms;
+        LOGI("Transcription complete: %.1f ms (RTF: %.3f)", elapsed_ms, rtf);
         whisper_print_timings(context);
     }
     (*env)->ReleaseFloatArrayElements(env, audio_data, audio_data_arr, JNI_ABORT);
