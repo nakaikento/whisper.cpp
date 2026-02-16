@@ -147,7 +147,25 @@ static struct whisper_context *whisper_init_from_asset(
 
     struct whisper_context_params ctx_params = whisper_context_default_params();
     ctx_params.use_gpu = true;
-    LOGI("Initializing whisper context with GPU enabled: %d\n", ctx_params.use_gpu);
+    
+    // Auto-detect GPU device (type == 2)
+    int gpu_device_idx = -1;
+    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+        ggml_backend_dev_t dev = ggml_backend_dev_get(i);
+        int dev_type = ggml_backend_dev_type(dev);
+        if (dev_type == 2) {  // GGML_BACKEND_DEVICE_TYPE_GPU
+            gpu_device_idx = i;
+            LOGI("Found GPU device %zu: %s\n", i, ggml_backend_dev_name(dev));
+            break;
+        }
+    }
+    
+    if (gpu_device_idx >= 0) {
+        ctx_params.gpu_device = gpu_device_idx;
+        LOGI("Initializing whisper context with GPU device %d\n", gpu_device_idx);
+    } else {
+        LOGI("No GPU device found, using CPU\n");
+    }
     
     struct whisper_context *ctx = whisper_init_with_params(&loader, ctx_params);
     if (ctx) {
